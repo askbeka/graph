@@ -1,26 +1,50 @@
-import { AppContainer } from 'react-hot-loader';
+import {AppContainer} from 'react-hot-loader';
 import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
+import {render} from 'react-dom';
+import {browserHistory} from 'react-router';
+import {syncHistoryWithStore} from 'react-router-redux';
+import Root from './container/Root';
+import createStore from './store/createStore';
+import createRoutes from './routes';
+
+// ========================================================
+// Store Instantiation
+// ========================================================
+
+const initialState = window.__INITIAL_STATE_;
+const store = createStore(initialState);
+const history = syncHistoryWithStore(browserHistory, store);
+
+const routes = createRoutes(store);
 
 const rootEl = document.getElementById('root');
-ReactDOM.render(
-  <AppContainer>
-    <App />
-  </AppContainer>,
-  rootEl
-);
 
-if (module.hot) {
-  module.hot.accept('./App', () => {
-    // If you use Webpack 2 in ES modules mode, you can
-    // use <App /> here rather than require() a <NextApp />.
-    const NextApp = require('./App').default;
-    ReactDOM.render(
-      <AppContainer>
-         <NextApp />
-      </AppContainer>,
-      rootEl
+const renderApp = () => {
+    const routes = require('./routes').default(store);
+    render(
+        <AppContainer>
+            <Root {...{store, history, routes}}/>
+        </AppContainer>,
+        rootEl
     );
-  });
+};
+
+// This code is excluded from production bundle
+if (__DEV__) {
+
+    // =======================
+    // Developer Tools Setup
+    // ========================================================
+    // if (window.devToolsExtension) {
+    //     window.devToolsExtension.open();
+    // }
+
+    // Hot reload
+    if (module.hot) {
+        module.hot.accept('./routes/index.js', () => {
+            renderApp();
+        });
+    }
 }
+
+renderApp();
